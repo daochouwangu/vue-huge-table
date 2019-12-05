@@ -11,9 +11,8 @@
       </thead>
     </slot>
     <tbody ref="tbody">
-      <tr :style="{ top:headerHeight + item._index * 24+'px'}" v-for="item in showData" :key="item.id">
-        <td style="width:100px" v-for="(prop, key) in columns" :key="key">{{item[key]}}</td>
-      </tr>
+      <TableRow :columns="columns" :style="{ top:headerHeight + item._index * 24+'px'}" v-for="item in showData" :item="item" :key="item.id">
+      </TableRow>
     </tbody>
     <slot name="footer">
     </slot>
@@ -22,11 +21,27 @@
 </template>
 <script>
 /* eslint no-console:0 */
+import TableRow from './TableRow'
+function throttle(time, func){
+  let start = 0;
+  return function(){
+    let that = this
+    var args = arguments;
+    let now = new Date().getTime()
+    if(now - start > time) {
+      func.apply(that, args);
+      start = now;
+    }
+  }
+}
 export default {
   name: 'Table',
   props: {
     data: Array,
     columns: Object
+  },
+  components: {
+    TableRow,
   },
   data(){
     return {
@@ -40,14 +55,14 @@ export default {
     }
   },
   methods: {
-    scrollChange(){
+    scrollChange: throttle(16, function (){
       this.scrollTop = this.$refs.table.scrollTop
       let { start, length, showLength, scrollTop } = this
       if (scrollTop + showLength * 24 > (start+length) * 24 || scrollTop < (start+showLength / 2) * 24) {
         const height = Math.floor((scrollTop - showLength *24) / 24 ) 
         this.start = height > 0 ? height : 0
       }
-    },
+    }),
   },
   mounted: function () {
     this.$nextTick(function () {
